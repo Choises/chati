@@ -1,6 +1,6 @@
 <div style="background: #1e1e1e; padding: 15px; border-radius: 8px; font-family: Arial, sans-serif; color: #e0e0e0; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; flex-direction: column; max-width: 100%; box-sizing: border-box;">
     
-    <!-- 1. ΚΥΛΙΟΜΕΝΗ ΜΠΑΡΑ ΑΝΑΚΟΙΝΩΣΕΩΝ -->
+    <!-- 1. ΚΥΛΙΟΜΕΝΗ ΜΠΑΡΑ ΑΝΑΚΟΙΝΩΣΕΩΝ (MARQUEE) -->
     <div style="background: #e74c3c; color: #fff; padding: 6px; font-size: 12px; font-weight: bold; border-radius: 4px 4px 0 0; overflow: hidden; white-space: nowrap;">
         <marquee behavior="scroll" direction="left" scrollamount="4">
             📻 Καλώς ήρθατε στο Radio Live! Στείλτε μας τις αφιερώσεις, τα μηνύματα και τα φωνητικά σας ζωντανά στο studio... Καλή ακρόαση! 🎶
@@ -44,10 +44,12 @@
     </div>
 </div>
 
+<!-- ΕΝΙΑΙΟ ΚΑΙ ΕΓΓΥΗΜΕΝΟ LINK ΓΙΑ ΤΗ ΒΙΒΛΙΟΘΗΚΗ SOCKET.IO -->
+<script src="https://cloudflare.com"></script>
+
 <script>
-    // Σύνδεση με τον WebSocket Server (ΚΑΘΑΡΟΣ ΤΡΟΠΟΣ - ΧΩΡΙΣ ΕΞΩΤΕΡΙΚΑ LINKS)
-    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-    const socket = new WebSocket(protocol + '://panagiotis-live-chat.onrender.com/');
+    // Σύνδεση με τον Socket.io Server σας στο Render
+    const socket = io('https://panagiotis-live-chat.onrender.com/');
 
     // --- Links ήχων ---
     const soundJoin = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
@@ -76,7 +78,6 @@
     let mediaRecorder;
     let audioChunks = [];
 
-    // Έλεγχος για εικόνες/GIF και links
     function linkify(text) {
         const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
         return text.replace(urlPattern, function(url) {
@@ -88,15 +89,15 @@
         });
     }
 
-    // ΣΥΝΑΡΤΗΣΗ ΓΙΑ EMOJIS
+    // ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΝΑ ΜΠΑΙΝΕΙ ΤΟ EMOJI ΣΤΟ ΚΟΥΤΙ ΜΗΝΥΜΑΤΟΣ
     function insertEmoji(emoji) {
         if(messageInput.disabled) return;
         messageInput.value += emoji;
         messageInput.focus();
     }
 
-    // Μόλις συνδεθεί επιτυχώς (Καθαρό WebSocket)
-    socket.onopen = () => {
+    // Σύνδεση με Socket.io
+    socket.on('connect', () => {
         statusContainer.innerHTML = '🟢 Συνδεθήκατε στο Chat!';
         statusContainer.style.color = '#2ecc71';
         statusContainer.style.fontWeight = 'bold';
@@ -107,7 +108,7 @@
             voiceButton.disabled = false;
             setupVoiceRecording();
         }
-    };
+    });
 
     function setupVoiceRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
@@ -155,19 +156,16 @@
         const uniqueMsgId = 'msg_' + Math.random().toString(36).substr(2, 9);
         soundSend.play().catch(e => console.log('Ήχος'));
 
-        const messageData = {
-            type: 'voice-message',
+        socket.emit('send-message', {
+            isVoice: true,
             messageId: uniqueMsgId,
-            username: username,
-            audioData: base64Data,
+            name: username,
+            message: base64Data,
             color: userColor,
             userId: myUserId
-        };
-        socket.send(JSON.stringify(messageData));
+        });
     }
 
-    socket.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-            
-if (data.type === 'update-online') {onlineCounter.innerHTML = 'Online: ' + data.count;return;}if (data.type === 'delete-message') {const elToRemove = document.getElementById(data.messageId);if (elToRemove) elToRemove.remove();return;}const messageElement = document.createElement('div');messageElement.id = data.messageId;messageElement.style.marginBottom = '10px';messageElement.style.display = 'flex';messageElement.style.alignItems = 'flex-start';let deleteHtml = '';if (isAdmin) {deleteHtml = <button style="background: #c0392b; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 8px; font-weight: bold; margin-top:2px;" onclick="requestDelete('${data.messageId}')">X</button>;}if (data.type === 'voice-message') {messageElement.innerHTML = ${deleteHtml}<div><strong style="color: ${data.color || '#3498db'};">${data.username}:</strong> <audio controls style="margin-top: 5px; display: block; max-width: 240px; background: #2c2c2c; border-radius: 4px;" src="${data.audioData}"></audio></div>;} else if (data.type === 'chat-message' || (!data.type && data.text)) {const textToSend = data.text || data.message;const formattedText = linkify(textToSend);messageElement.innerHTML = ${deleteHtml}<div><strong style="color: ${data.color || '#3498db'};">${data.username}:</strong> <span style="color: #e0e0e0;">${formattedText}</span></div>;}messagesContainer.appendChild(messageElement);messagesContainer.scrollTop = messagesContainer.scrollHeight;} catch (e) {console.error(e);}};socket.onclose = () => {statusContainer.innerHTML = '🔴 Η σύνδεση χάθηκε. Ανανεώστε τη σελίδα.';statusContainer.style.color = '#e74c3c';messageInput.disabled = true;sendButton.disabled = true;voiceButton.disabled = true;};function sendMessage() {const username = usernameInput.value.trim() || 'Επισκέπτης';const text = messageInput.value.trim();if (text === '') return;soundSend.play().catch(e => console.log('Ήχος'));const uniqueMsgId = 'msg_' + Math.random().toString(36).substr(2, 9);const messageData = {type: 'chat-message',messageId: uniqueMsgId,username: username,text: text,color: userColor,userId: myUserId};socket.send(JSON.stringify(messageData));messageInput.value = '';}function requestDelete(msgId) {const deleteData = { type: 'delete-message', messageId: msgId };socket.send(JSON.stringify(deleteData));}sendButton.addEventListener('click', sendMessage);messageInput.addEventListener('keypress', (e) => {if (e.key === 'Enter') sendMessage();});</script>
+    socket.on('receive-message', (data) => {
+        if (data.type === 'delete-message' || data.messageType === 'delete-message') {
+const elToRemove = document.getElementById(data.messageId);if (elToRemove) elToRemove.remove();return;}if (document.getElementById(data.messageId)) return;const messageElement = document.createElement('div');messageElement.id = data.messageId;messageElement.style.marginBottom = '10px';messageElement.style.display = 'flex';messageElement.style.alignItems = 'flex-start';let deleteHtml = '';if (isAdmin) {deleteHtml = <button style="background: #c0392b; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 8px; font-weight: bold; margin-top:2px;" onclick="requestDelete('${data.messageId}')">X</button>;}if (data.isVoice) {messageElement.innerHTML = ${deleteHtml}<div><strong style="color: ${data.color || '#3498db'};">${data.name}:</strong> <audio controls style="margin-top: 5px; display: block; max-width: 240px; background: #2c2c2c; border-radius: 4px;" src="${data.message}"></audio></div>;} else {const formattedText = linkify(data.message);messageElement.innerHTML = ${deleteHtml}<div><strong style="color: ${data.color || '#3498db'};">${data.name}:</strong> <span style="color: #e0e0e0;">${formattedText}</span></div>;}messagesContainer.appendChild(messageElement);messagesContainer.scrollTop = messagesContainer.scrollHeight;if (data.userId !== myUserId) {soundReceive.play().catch(e => console.log('Ήχος'));}});socket.on('update-online', (count) => {onlineCounter.innerHTML = 'Online: ' + count;});function sendMessage() {const username = usernameInput.value.trim() || 'Επισκέπτης';const text = messageInput.value.trim();if (text === '') return;soundSend.play().catch(e => console.log('Ήχος'));const uniqueMsgId = 'msg_' + Math.random().toString(36).substr(2, 9);socket.emit('send-message', {messageId: uniqueMsgId,name: username,message: text,color: userColor,userId: myUserId});messageInput.value = '';}function requestDelete(msgId) {socket.emit('send-message', { type: 'delete-message', messageId: msgId });}sendButton.addEventListener('click', sendMessage);messageInput.addEventListener('keypress', (e) => {if (e.key === 'Enter') sendMessage();});</script>
