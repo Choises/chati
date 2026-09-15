@@ -36,7 +36,7 @@
 <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
 
 <script>
-    // Σύνδεση με τον Socket.io Server σας στο Render
+       // Σύνδεση με τον Socket.io Server σας στο Render
     const socket = io('https://panagiotis-live-chat.onrender.com/');
 
     // --- Links ήχων ---
@@ -63,8 +63,9 @@
     const onlineCounter = document.getElementById('online-counter');
     const voiceButton = document.getElementById('voice-btn');
 
-    let mediaRecorder;
+    let mediaRecorder = null;
     let audioChunks = [];
+    let mediaStream = null;
 
     function linkify(text) {
         const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
@@ -77,34 +78,38 @@
         });
     }
 
-    // Σύνδεση με Socket.io
-       socket.on('connect', () => {
+    socket.on('connect', () => {
         statusContainer.innerHTML = '🟢 Συνδεθήκατε στο Chat!';
         statusContainer.style.color = '#2ecc71';
         statusContainer.style.fontWeight = 'bold';
         messageInput.disabled = false;
         sendButton.disabled = false;
 
+        // Ενεργοποιούμε το κουμπί αν η συσκευή υποστηρίζει μικρόφωνο
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             voiceButton.disabled = false;
         }
     });
-        let mediaStream = null; // Κρατάει το live μικρόφωνο ανοιχτό μόνο κατά την εγγραφή
 
-    function startRecording(e) {
+    // 🎙️ ΝΕΟΣ ΕΝΙΣΧΥΜΕΝΟΣ ΜΗΧΑΝΙΣΜΟΣ ΦΩΝΗΤΙΚΩΝ (Ανοίγει & Κλείνει αμέσως!)
+    async function startRecording(e) {
         e.preventDefault();
         audioChunks = [];
         
-        // Ανοίγουμε το μικρόφωνο ΜΟΝΟ τώρα που ο ακροατής πάτησε το κουμπί!
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-            mediaStream = stream;
-            mediaRecorder = new MediaRecorder(stream);
+        try {
+            // Ανοίγουμε το μικρόφωνο ΜΟΝΟ τώρα
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(mediaStream);
             
             mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
             };
 
             mediaRecorder.onstop = () => {
+                if (audioChunks.length === 0) return;
+                
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
@@ -112,45 +117,33 @@
                     sendVoiceMessage(reader.result);
                 };
                 
-                // ΚΛΕΙΝΟΥΜΕ ΤΟ ΜΙΚΡΟΦΩΝΟ ΟΡΙΣΤΙΚΑ για να καθαρίσει ο ήχος του ραδιοφώνου!
+                // ΚΛΕΙΝΟΥΜΕ ΤΟ ΜΙΚΡΟΦΩΝΟ ΑΜΕΣΩΣ για να μην επηρεάζει το ραδιόφωνο
                 if (mediaStream) {
                     mediaStream.getTracks().forEach(track => track.stop());
                 }
             };
 
             mediaRecorder.start();
-            voiceButton.style.background = '#f1c40f'; // Γίνεται κίτρινο κατά την ηχογράφηση
-        }).catch(err => console.log('Σφάλμα μικροφώνου:', err));
+            voiceButton.style.background = '#f1c40f'; // Κίτρινο
+        } catch (err) {
+            console.log('Σφάλμα έναρξης μικροφώνου:', err);
+        }
     }
 
     function stopRecording(e) {
         e.preventDefault();
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
-            voiceButton.style.background = '#c0392b'; // Επιστρέφει στο κόκκινο
+            voiceButton.style.background = '#c0392b'; // Κόκκινο
         }
     }
 
-    // Συνδέουμε τα πατήματα (ποντίκι και αφή κινητού) με τις νέες έξυπνες συναρτήσεις
+    // Σύνδεση των listeners με ασφάλεια
     if (voiceButton) {
         voiceButton.addEventListener('mousedown', startRecording);
         voiceButton.addEventListener('touchstart', startRecording);
         voiceButton.addEventListener('mouseup', stopRecording);
         voiceButton.addEventListener('touchend', stopRecording);
-    }
-
-    function startRecording(e) {
-        e.preventDefault();
-        if (!mediaRecorder || mediaRecorder.state === 'recording') return;
-        audioChunks = [];
-        mediaRecorder.start();
-        voiceButton.style.background = '#f1c40f';
-    }
-
-    function stopRecording() {
-        if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
-        mediaRecorder.stop();
-        voiceButton.style.background = '#c0392b';
     }
 
     function sendVoiceMessage(base64Data) {
@@ -223,4 +216,14 @@
             userId: myUserId
         });
         messageInput.value = '';
-}function requestDelete(msgId) {socket.emit('send-message', { type: 'delete-message', messageId: msgId });}sendButton.addEventListener('click', sendMessage);messageInput.addEventListener('keypress', (e) => {if (e.key === 'Enter') sendMessage();}); </script>
+    }
+
+    function requestDelete(msgId) {
+        socket.emit('send-message', { type: 'delete-message', messageId: msgId });
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+ </script>
