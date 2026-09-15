@@ -78,7 +78,7 @@
     }
 
     // Σύνδεση με Socket.io
-    socket.on('connect', () => {
+       socket.on('connect', () => {
         statusContainer.innerHTML = '🟢 Συνδεθήκατε στο Chat!';
         statusContainer.style.color = '#2ecc71';
         statusContainer.style.fontWeight = 'bold';
@@ -87,12 +87,17 @@
 
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             voiceButton.disabled = false;
-            setupVoiceRecording();
         }
     });
+        let mediaStream = null; // Κρατάει το live μικρόφωνο ανοιχτό μόνο κατά την εγγραφή
 
-    function setupVoiceRecording() {
+    function startRecording(e) {
+        e.preventDefault();
+        audioChunks = [];
+        
+        // Ανοίγουμε το μικρόφωνο ΜΟΝΟ τώρα που ο ακροατής πάτησε το κουμπί!
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            mediaStream = stream;
             mediaRecorder = new MediaRecorder(stream);
             
             mediaRecorder.ondataavailable = event => {
@@ -101,21 +106,37 @@
 
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                audioChunks = [];
-                
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = () => {
-                    const base64Audio = reader.result;
-                    sendVoiceMessage(base64Audio);
+                    sendVoiceMessage(reader.result);
                 };
+                
+                // ΚΛΕΙΝΟΥΜΕ ΤΟ ΜΙΚΡΟΦΩΝΟ ΟΡΙΣΤΙΚΑ για να καθαρίσει ο ήχος του ραδιοφώνου!
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                }
             };
-        }).catch(err => console.log('Μικρόφωνο error:', err));
 
+            mediaRecorder.start();
+            voiceButton.style.background = '#f1c40f'; // Γίνεται κίτρινο κατά την ηχογράφηση
+        }).catch(err => console.log('Σφάλμα μικροφώνου:', err));
+    }
+
+    function stopRecording(e) {
+        e.preventDefault();
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            voiceButton.style.background = '#c0392b'; // Επιστρέφει στο κόκκινο
+        }
+    }
+
+    // Συνδέουμε τα πατήματα (ποντίκι και αφή κινητού) με τις νέες έξυπνες συναρτήσεις
+    if (voiceButton) {
         voiceButton.addEventListener('mousedown', startRecording);
         voiceButton.addEventListener('touchstart', startRecording);
-        window.addEventListener('mouseup', stopRecording);
-        window.addEventListener('touchend', stopRecording);
+        voiceButton.addEventListener('mouseup', stopRecording);
+        voiceButton.addEventListener('touchend', stopRecording);
     }
 
     function startRecording(e) {
