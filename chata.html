@@ -98,7 +98,15 @@
         
         try {
             // Ανοίγουμε το μικρόφωνο ΜΟΝΟ τώρα
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                       // Ανοίγουμε το μικρόφωνο με απενεργοποιημένους τους αυτοματισμούς για σταθερή ένταση!
+            mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: false,      // Κλείνει την ακύρωση αντίλαλου (που χαλάει την ένταση)
+                    noiseSuppression: false,      // Κλείνει τη μείωση θορύβου (που πνίγει τη φωνή)
+                    autoGainControl: false        // Κλείνει το αυτόματο ανεβοκατέβασμα της έντασης!
+                } 
+            });
+
             mediaRecorder = new MediaRecorder(mediaStream);
             
             mediaRecorder.ondataavailable = event => {
