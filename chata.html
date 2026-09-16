@@ -210,7 +210,7 @@
         if (data.isVoice) { 
             msgEl.innerHTML = `${delBtn}<strong style="color:#3498db;">${data.name}:</strong><audio controls src="${data.message}"></audio>`; 
         } else { 
-            msgEl.innerHTML = `${delBtn}<strong style="color:#3498db;">${data.name}:</strong> <span>${data.message}</span>`; 
+            msgEl.innerHTML = `${delBtn}<strong style="color:#3498db;">${data.name}:</strong> <span>${linkify(data.message}</span>`; 
         }
         
         messagesContainer.appendChild(msgEl); 
