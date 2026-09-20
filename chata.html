@@ -149,6 +149,10 @@
     const socket = io('https://panagiotis-live-chat.onrender.com/');
     const soundSend = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
     const soundReceive = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
+   
+    // 🎨 Πίνακας με έντονα, φωτεινά Neon χρώματα για τους επισκέπτες
+    const colors = ['#00ffcc', '#00ff66', '#ffff00', '#ff007f', '#ff9900', '#cc00ff', '#33ccff', '#ff3333', '#1abc9c'];
+    const userColor = colors[Math.floor(Math.random() * colors.length)];
 
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === 'true';
