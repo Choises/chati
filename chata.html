@@ -149,10 +149,11 @@
     const socket = io('https://panagiotis-live-chat.onrender.com/');
     const soundSend = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
     const soundReceive = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
-   
+
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === 'true';
     const myUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+
     const colors = ['#00ffcc', '#00ff66', '#ffff00', '#ff007f', '#ff9900', '#cc00ff', '#33ccff', '#ff3333', '#1abc9c'];
     const userColor = colors[Math.floor(Math.random() * colors.length)];
 
@@ -165,47 +166,38 @@
 
     let mediaRecorder = null; let audioChunks = []; let mediaStream = null;
 
-        // Η «μαγική» συνάρτηση linkify (Απλή, πανίσχυρη και σε ασφαλή μορφή)
+    // Η «μαγική» συνάρτηση linkify (Απλή, πανίσχυρη και σε ασφαλή μορφή)
     function linkify(text) {
         const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
         return text.replace(urlPattern, function(url) {
             const u = url.toLowerCase();
             if (u.includes('.jpg') || u.includes('.jpeg') || u.includes('.png') || u.includes('.gif') || u.includes('.webp')) {
+                return `<img src="${url}" style="max-width: 100%; max-height: 150px; border-radius: 8px; display: block; margin-top: 5px; border: 1px solid #333; cursor: pointer;" onclick="window.open('${url}', '_blank')" alt="Εικόνα Chat" />`;
+            } else {
                 return `<a href="${url}" target="_blank" style="color: #00ffcc; text-decoration: underline; font-weight: bold;">${url}</a>`;
             }
         });
     }
-    
+
     socket.on('connect', () => {
-        statusContainer.innerHTML = '🟢 Συνδεθήκατε στο Chat!'; 
-        statusContainer.style.color = '#2ecc71';
-        messageInput.disabled = false; 
-        sendButton.disabled = false;
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { 
-            voiceButton.disabled = false; 
-            setupVoiceRecording(); 
-        }
+        statusContainer.innerHTML = '🟢 Live Chat Συνδέθηκε!'; statusContainer.style.color = '#2ecc71';
+        messageInput.disabled = false; sendButton.disabled = false;
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { voiceButton.disabled = false; setupVoiceRecording(); }
     });
 
     function setupVoiceRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-            mediaStream = stream; 
-            mediaRecorder = new MediaRecorder(stream);
+            mediaStream = stream; mediaRecorder = new MediaRecorder(stream);
             mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); 
-                audioChunks = [];
-                const reader = new FileReader(); 
-                reader.readAsDataURL(audioBlob);
-                reader.onloadend = () => socket.emit('send-message', { isVoice: true, messageId: 'msg_'+Math.random().toString(36).substr(2,9), name: usernameInput.value.trim()||'Επισκέπτης', message: reader.result, userId: myUserId });
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); audioChunks = [];
+                const reader = new FileReader(); reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => socket.emit('send-message', { isVoice: true, messageId: 'msg_'+Math.random().toString(36).substr(2,9), name: usernameInput.value.trim()||'Επισκέπτης', message: reader.result, color: userColor, userId: myUserId });
             };
         }).catch(err => console.log(err));
 
-        // Listeners για υπολογιστή
         voiceButton.addEventListener('mousedown', () => { if(mediaRecorder && mediaRecorder.state==='inactive') { audioChunks=[]; mediaRecorder.start(); voiceButton.style.background='#f1c40f'; } });
         window.addEventListener('mouseup', () => { if(mediaRecorder && mediaRecorder.state==='recording') { mediaRecorder.stop(); voiceButton.style.background='#c0392b'; } });
-        
-        // Listeners για κινητά (Αφή)
         voiceButton.addEventListener('touchstart', (e) => { e.preventDefault(); audioChunks=[]; mediaRecorder.start(); voiceButton.style.background='#f1c40f'; });
         voiceButton.addEventListener('touchend', () => { if(mediaRecorder && mediaRecorder.state==='recording') { mediaRecorder.stop(); voiceButton.style.background='#c0392b'; } });
     }
@@ -213,47 +205,38 @@
     socket.on('receive-message', (data) => {
         if (data.type === 'delete-message') { const el = document.getElementById(data.messageId); if(el) el.remove(); return; }
         if (document.getElementById(data.messageId)) return;
-        
-        const msgEl = document.createElement('div'); 
-        msgEl.id = data.messageId; 
-        msgEl.style.marginBottom = '10px';
-        
-        let delBtn = isAdmin ? `<button style="background:#c0392b;color:white;height:20px;padding:0 6px;margin-right:6px;font-size:11px;" onclick="socket.emit('send-message',{type:'delete-message',messageId:'${data.messageId}'})">X</button>` : '';
+        const msgEl = document.createElement('div'); msgEl.id = data.messageId; msgEl.style.marginBottom = '8px';
+        let delBtn = isAdmin ? `<button style="background:#c0392b;color:white;height:20px;padding:0 5px;margin-right:5px;" onclick="socket.emit('send-message',{type:'delete-message',messageId:'${data.messageId}'})">X</button>` : '';
         
         if (data.isVoice) { 
-            msgEl.innerHTML = `${delBtn}<strong style="color:#3498db;">${data.name}:</strong><audio controls src="${data.message}"></audio>`; 
-               } else { 
-            // Διαβάζουμε το μοναδικό χρώμα (data.color) που έρχεται live από τον κάθε χρήστη!
+            msgEl.innerHTML = `${delBtn}<strong style="color:${data.color || '#00ffcc'};">${data.name}:</strong><audio controls style="max-width:180px;height:30px;display:block;" src="${data.message}"></audio>`; 
+        } else { 
             msgEl.innerHTML = `${delBtn}<strong style="color:${data.color || '#00ffcc'};">${data.name}:</strong> <span>${linkify(data.message)}</span>`; 
         }
- 
-        messagesContainer.appendChild(msgEl); 
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        messagesContainer.appendChild(msgEl); messagesContainer.scrollTop = messagesContainer.scrollHeight;
         if(data.userId !== myUserId) soundReceive.play().catch(e=>'');
     });
 
-                // Διορθώνουμε το όνομα σε sendMessage για να ακούει το κουμπί της HTML!
     function sendMessage() {
         const text = messageInput.value.trim(); 
         if (text === '') return;
-         
+
         soundSend.play().catch(e => console.log('Ήχος'));
 
-        // Στέλνουμε το μήνυμα μαζί με το νέο έντονο χρώμα του χρήστη
         socket.emit('send-message', { 
             messageId: 'msg_' + Math.random().toString(36).substr(2, 9), 
             name: usernameInput.value.trim() || 'Επισκέπτης', 
-            message: text,
-            color: userColor,
+            message: text, 
             color: userColor, 
             userId: myUserId 
         });
-
         messageInput.value = '';
     }
 
-    sendButton.addEventListener('click', sendMsg);
-    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMsg(); });
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
 </script>
 </body>
 </html>
