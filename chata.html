@@ -150,13 +150,11 @@
     const soundSend = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
     const soundReceive = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
    
-    // 🎨 Πίνακας με έντονα, φωτεινά Neon χρώματα για τους επισκέπτες
-    const colors = ['#00ffcc', '#00ff66', '#ffff00', '#ff007f', '#ff9900', '#cc00ff', '#33ccff', '#ff3333', '#1abc9c'];
-    const userColor = colors[Math.floor(Math.random() * colors.length)];
-
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === 'true';
     const myUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+    const colors = ['#00ffcc', '#00ff66', '#ffff00', '#ff007f', '#ff9900', '#cc00ff', '#33ccff', '#ff3333', '#1abc9c'];
+    const userColor = colors[Math.floor(Math.random() * colors.length)];
 
     const messagesContainer = document.getElementById('chat-messages');
     const statusContainer = document.getElementById('connection-status');
@@ -225,10 +223,11 @@
         
         if (data.isVoice) { 
             msgEl.innerHTML = `${delBtn}<strong style="color:#3498db;">${data.name}:</strong><audio controls src="${data.message}"></audio>`; 
-        } else { 
-            msgEl.innerHTML = `${delBtn}<strong style="color:#3498db;">${data.name}:</strong> <span>${linkify(data.message)}</span>`; 
+               } else { 
+            // Διαβάζουμε το μοναδικό χρώμα (data.color) που έρχεται live από τον κάθε χρήστη!
+            msgEl.innerHTML = `${delBtn}<strong style="color:${data.color || '#00ffcc'};">${data.name}:</strong> <span>${linkify(data.message)}</span>`; 
         }
-        
+ 
         messagesContainer.appendChild(msgEl); 
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         if(data.userId !== myUserId) soundReceive.play().catch(e=>'');
