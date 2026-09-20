@@ -131,7 +131,7 @@
     </div>
 
     <div id="chat-messages">
-        <div id="connection-status" style="color: #8a99ad; text-align: center; font-style: italic;">Σύνδεση στο chat...</div>
+        <div id="connection-status" style="color:${data.color || '#00ffcc'};"ύνδεση στο chat...</div>
     </div>
     
     <div id="input-area">
@@ -165,13 +165,12 @@
 
     let mediaRecorder = null; let audioChunks = []; let mediaStream = null;
 
-        // Η «μαγική» συνάρτηση που μετατρέπει τα links σε εικόνες/GIF αυτόματα!
+        // Η «μαγική» συνάρτηση linkify (Απλή, πανίσχυρη και σε ασφαλή μορφή)
     function linkify(text) {
         const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
         return text.replace(urlPattern, function(url) {
-            if (url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i)) {
-                return `<img src="${url}" style="max-width: 100%; max-height: 150px; border-radius: 8px; display: block; margin-top: 5px; border: 1px solid #333; cursor: pointer;" onclick="window.open('${url}', '_blank')" alt="Εικόνα Chat" />`;
-            } else {
+            const u = url.toLowerCase();
+            if (u.includes('.jpg') || u.includes('.jpeg') || u.includes('.png') || u.includes('.gif') || u.includes('.webp')) {
                 return `<a href="${url}" target="_blank" style="color: #00ffcc; text-decoration: underline; font-weight: bold;">${url}</a>`;
             }
         });
@@ -237,14 +236,15 @@
     function sendMessage() {
         const text = messageInput.value.trim(); 
         if (text === '') return;
-
+         
         soundSend.play().catch(e => console.log('Ήχος'));
 
         // Στέλνουμε το μήνυμα μαζί με το νέο έντονο χρώμα του χρήστη
         socket.emit('send-message', { 
             messageId: 'msg_' + Math.random().toString(36).substr(2, 9), 
             name: usernameInput.value.trim() || 'Επισκέπτης', 
-            message: text, 
+            message: text,
+            color: userColor,
             color: userColor, 
             userId: myUserId 
         });
