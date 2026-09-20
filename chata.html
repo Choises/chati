@@ -230,18 +230,12 @@
         if(data.userId !== myUserId) soundReceive.play().catch(e=>'');
     });
 
-        function sendMsg() {
+            function sendMsg() {
         const txt = messageInput.value.trim(); if(!txt) return;
-        // Προσθέτουμε το color: userColor για να στέλνεται το μοναδικό χρώμα του επισκέπτη!
-        socket.emit('send-message', { 
-            messageId: 'msg_'+Math.random().toString(36).substr(2,9), 
-            name: usernameInput.value.trim()||'Επισκέπτης', 
-            message: txt, 
-            color: userColor, 
-            userId: myUserId 
-        });
+        socket.emit('send-message', { messageId: 'msg_'+Math.random().toString(36).substr(2,9), name: usernameInput.value.trim()||'Επισκέπτης', message: txt, userId: myUserId });
         messageInput.value = '';
     }
+
 
     sendButton.addEventListener('click', sendMsg);
     messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMsg(); });
