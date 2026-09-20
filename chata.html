@@ -231,8 +231,18 @@
     });
 
             function sendMsg() {
-        const txt = messageInput.value.trim(); if(!txt) return;
-        socket.emit('send-message', { messageId: 'msg_'+Math.random().toString(36).substr(2,9), name: usernameInput.value.trim()||'Επισκέπτης', color: userColor, message: txt, userId: myUserId });
+        const txt = messageInput.value.trim(); 
+        if (!txt) return;
+
+        // Στέλνουμε το μήνυμα στον server μαζί με το τυχαίο χρώμα του χρήστη
+        socket.emit('send-message', { 
+            messageId: 'msg_' + Math.random().toString(36).substr(2, 9), 
+            name: usernameInput.value.trim() || 'Επισκέπτης', 
+            message: txt, 
+            color: userColor, 
+            userId: myUserId 
+        });
+
         messageInput.value = '';
     }
 
