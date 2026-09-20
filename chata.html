@@ -3,39 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Live Chat</title>
+    <title>WELLCOME</title>
     <style>
+        /* Βασικές ρυθμίσεις για όλη τη σελίδα */
         html, body {
-            margin: 0; padding: 0; height: 100%; background: #121212; 
-            font-family: Arial, sans-serif; color: #e0e0e0; overflow: hidden;
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            background: transparent; /* Σκούρο φόντο παρασκηνίου */
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            color: #e0e0e0; 
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+
+        /* 📱 ΤΟ ΚΟΥΤΙ ΤΟΥ ΚΙΝΗΤΟΥ: Όρθιο layout που προσαρμόζεται στο ύψος (vh) */
         #chat-container {
-            display: flex; flex-direction: column; height: 100vh; width: 100%; box-sizing: border-box; padding: 10px;
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; /* Γεμίζει ακριβώς το ύψος του διαθέσιμου χώρου */
+            width: 100%; 
+            max-width: 360px; /* Κλειδώνει το πλάτος σαν όρθιο smartphone */
+            background: #14181f; /* Το εσωτερικό dark φόντο του chat */
+            box-sizing: border-box; 
+            padding: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
+
+        /* 📻 ΟLive Τίτλος & Online Μετρητής */
+        #chat-header {
+            background: #1e2530;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid #2c3545;
+            color: #00ffcc;
+            text-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
+        }
+
+        /* 💬 Ο ΧΩΡΟΣ ΤΩΝ ΜΗΝΥΜΑΤΩΝ (Παίρνει όλο τον ελεύθερο χώρο flexible) */
         #chat-messages {
-            flex: 1; background: #121212; overflow-y: auto; padding: 10px; font-size: 14px; border-bottom: 1px solid #333;
+            flex: 1; 
+            background: #0f1218; 
+            overflow-y: auto; 
+            padding: 12px; 
+            font-size: 14px; 
+            line-height: 1.4;
+            border-left: 1px solid #1e2530;
+            border-right: 1px solid #1e2530;
         }
+
+        /* ⌨️ Η ΜΠΑΡΑ ΕΙΣΑΓΩΓΗΣ (Μόνιμα καρφιτσωμένη στο κάτω μέρος) */
         #input-area {
-            padding: 8px 0; display: flex; flex-direction: column; gap: 6px; background: #121212;
+            padding: 10px 0 0 0; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            background: #14181f;
+            border-top: 1px solid #1e2530;
         }
-        .input-row { display: flex; gap: 5px; align-items: center; }
-        input[type="text"] { padding: 8px; border: 1px solid #444; border-radius: 4px; background: #2c2c2c; color: #fff; font-size: 14px; }
-        button { border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 35px; }
+
+        .input-row { 
+            display: flex; 
+            gap: 6px; 
+            align-items: center; 
+        }
+
+        input[type="text"] { 
+            padding: 9px; 
+            border: 1px solid #2c3545; 
+            border-radius: 6px; 
+            background: #1e2530; 
+            color: #fff; 
+            font-size: 14px; 
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #00ffcc;
+        }
+
+        button { 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            height: 36px; 
+            transition: all 0.2s ease;
+        }
+
+        #voice-btn {
+            background: #c0392b; 
+            color: white; 
+            width: 42px;
+            font-size: 16px;
+        }
+
+        #chat-send {
+            background: #2980b9; 
+            color: white; 
+            padding: 0 16px;
+            font-size: 14px;
+        }
+
+        #chat-send:hover { background: #3498db; }
+        
+        /* Ήχος controls styling */
+        audio {
+            max-width: 200px;
+            height: 32px;
+            margin-top: 4px;
+            display: block;
+        }
     </style>
 </head>
 <body>
 
 <div id="chat-container">
+    <div id="chat-header">
+        📻 Radio Live Chat
+    </div>
+
     <div id="chat-messages">
-        <div id="connection-status" style="color: #aaa; text-align: center; font-style: italic;">Σύνδεση στο chat...</div>
+        <div id="connection-status" style="color: #8a99ad; text-align: center; font-style: italic;">Σύνδεση στο chat...</div>
     </div>
     
     <div id="input-area">
         <input type="text" id="chat-username" placeholder="Το όνομά σας..." style="width: 100%; box-sizing: border-box;" />
         <div class="input-row">
-            <button id="voice-btn" style="background: #c0392b; color: white; width: 40px;" disabled>🎙️</button>
+            <button id="voice-btn" title="Κρατήστε πατημένο για φωνητικό" disabled>🎙️</button>
             <input type="text" id="chat-message" placeholder="Γράψτε μήνυμα..." disabled style="flex: 1;" />
-            <button id="chat-send" style="background: #2980b9; color: white; padding: 0 15px;" disabled>Αποστολή</button>
+            <button id="chat-send" disabled>Αποστολή</button>
         </div>
     </div>
 </div>
@@ -45,11 +149,10 @@
     const socket = io('https://panagiotis-live-chat.onrender.com/');
     const soundSend = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
     const soundReceive = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
-
+   
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === 'true';
     const myUserId = 'user_' + Math.random().toString(36).substr(2, 9);
-
     const colors = ['#00ffcc', '#00ff66', '#ffff00', '#ff007f', '#ff9900', '#cc00ff', '#33ccff', '#ff3333', '#1abc9c'];
     const userColor = colors[Math.floor(Math.random() * colors.length)];
 
@@ -62,38 +165,48 @@
 
     let mediaRecorder = null; let audioChunks = []; let mediaStream = null;
 
-    // Η «μαγική» συνάρτηση linkify (Απλή, πανίσχυρη και σε ασφαλή μορφή)
+        // Η «μαγική» συνάρτηση που μετατρέπει τα links σε εικόνες/GIF αυτόματα!
     function linkify(text) {
         const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
         return text.replace(urlPattern, function(url) {
-            const u = url.toLowerCase();
-            if (u.includes('.jpg') || u.includes('.jpeg') || u.includes('.png') || u.includes('.gif') || u.includes('.webp')) {
+            if (url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i)) {
                 return `<img src="${url}" style="max-width: 100%; max-height: 150px; border-radius: 8px; display: block; margin-top: 5px; border: 1px solid #333; cursor: pointer;" onclick="window.open('${url}', '_blank')" alt="Εικόνα Chat" />`;
             } else {
                 return `<a href="${url}" target="_blank" style="color: #00ffcc; text-decoration: underline; font-weight: bold;">${url}</a>`;
             }
         });
     }
-
+    
     socket.on('connect', () => {
-        statusContainer.innerHTML = '🟢 Live Chat Συνδέθηκε!'; statusContainer.style.color = '#2ecc71';
-        messageInput.disabled = false; sendButton.disabled = false;
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { voiceButton.disabled = false; setupVoiceRecording(); }
+        statusContainer.innerHTML = '🟢 Συνδεθήκατε στο Chat!'; 
+        statusContainer.style.color = '#2ecc71';
+        messageInput.disabled = false; 
+        sendButton.disabled = false;
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { 
+            voiceButton.disabled = false; 
+            setupVoiceRecording(); 
+        }
     });
 
     function setupVoiceRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-            mediaStream = stream; mediaRecorder = new MediaRecorder(stream);
+            mediaStream = stream; 
+            mediaRecorder = new MediaRecorder(stream);
             mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); audioChunks = [];
-                const reader = new FileReader(); reader.readAsDataURL(audioBlob);
-                reader.onloadend = () => socket.emit('send-message', { isVoice: true, messageId: 'msg_'+Math.random().toString(36).substr(2,9), name: usernameInput.value.trim()||'Επισκέπτης', message: reader.result, color: userColor, userId: myUserId });
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); 
+                audioChunks = [];
+                const reader = new FileReader(); 
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => socket.emit('send-message', { isVoice: true, messageId: 'msg_'+Math.random().toString(36).substr(2,9), name: usernameInput.value.trim()||'Επισκέπτης', message: reader.result, userId: myUserId });
             };
         }).catch(err => console.log(err));
 
+        // Listeners για υπολογιστή
         voiceButton.addEventListener('mousedown', () => { if(mediaRecorder && mediaRecorder.state==='inactive') { audioChunks=[]; mediaRecorder.start(); voiceButton.style.background='#f1c40f'; } });
         window.addEventListener('mouseup', () => { if(mediaRecorder && mediaRecorder.state==='recording') { mediaRecorder.stop(); voiceButton.style.background='#c0392b'; } });
+        
+        // Listeners για κινητά (Αφή)
         voiceButton.addEventListener('touchstart', (e) => { e.preventDefault(); audioChunks=[]; mediaRecorder.start(); voiceButton.style.background='#f1c40f'; });
         voiceButton.addEventListener('touchend', () => { if(mediaRecorder && mediaRecorder.state==='recording') { mediaRecorder.stop(); voiceButton.style.background='#c0392b'; } });
     }
@@ -101,24 +214,33 @@
     socket.on('receive-message', (data) => {
         if (data.type === 'delete-message') { const el = document.getElementById(data.messageId); if(el) el.remove(); return; }
         if (document.getElementById(data.messageId)) return;
-        const msgEl = document.createElement('div'); msgEl.id = data.messageId; msgEl.style.marginBottom = '8px';
-        let delBtn = isAdmin ? `<button style="background:#c0392b;color:white;height:20px;padding:0 5px;margin-right:5px;" onclick="socket.emit('send-message',{type:'delete-message',messageId:'${data.messageId}'})">X</button>` : '';
+        
+        const msgEl = document.createElement('div'); 
+        msgEl.id = data.messageId; 
+        msgEl.style.marginBottom = '10px';
+        
+        let delBtn = isAdmin ? `<button style="background:#c0392b;color:white;height:20px;padding:0 6px;margin-right:6px;font-size:11px;" onclick="socket.emit('send-message',{type:'delete-message',messageId:'${data.messageId}'})">X</button>` : '';
         
         if (data.isVoice) { 
-            msgEl.innerHTML = `${delBtn}<strong style="color:${data.color || '#00ffcc'};">${data.name}:</strong><audio controls style="max-width:180px;height:30px;display:block;" src="${data.message}"></audio>`; 
-        } else { 
+            msgEl.innerHTML = `${delBtn}<strong style="color:#3498db;">${data.name}:</strong><audio controls src="${data.message}"></audio>`; 
+               } else { 
+            // Διαβάζουμε το μοναδικό χρώμα (data.color) που έρχεται live από τον κάθε χρήστη!
             msgEl.innerHTML = `${delBtn}<strong style="color:${data.color || '#00ffcc'};">${data.name}:</strong> <span>${linkify(data.message)}</span>`; 
         }
-        messagesContainer.appendChild(msgEl); messagesContainer.scrollTop = messagesContainer.scrollHeight;
+ 
+        messagesContainer.appendChild(msgEl); 
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
         if(data.userId !== myUserId) soundReceive.play().catch(e=>'');
     });
 
+                // Διορθώνουμε το όνομα σε sendMessage για να ακούει το κουμπί της HTML!
     function sendMessage() {
         const text = messageInput.value.trim(); 
         if (text === '') return;
 
         soundSend.play().catch(e => console.log('Ήχος'));
 
+        // Στέλνουμε το μήνυμα μαζί με το νέο έντονο χρώμα του χρήστη
         socket.emit('send-message', { 
             messageId: 'msg_' + Math.random().toString(36).substr(2, 9), 
             name: usernameInput.value.trim() || 'Επισκέπτης', 
@@ -126,13 +248,12 @@
             color: userColor, 
             userId: myUserId 
         });
+
         messageInput.value = '';
     }
 
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    sendButton.addEventListener('click', sendMsg);
+    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMsg(); });
 </script>
 </body>
 </html>
