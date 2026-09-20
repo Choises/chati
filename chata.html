@@ -65,23 +65,24 @@
 
     let mediaRecorder = null; let audioChunks = []; let mediaStream = null;
 
-    // Η «μαγική» συνάρτηση linkify για αυτόματο άνοιγμα εικόνων
+        // Η «μαγική» συνάρτηση που μετατρέπει τα links σε εικόνες/GIF αυτόματα!
     function linkify(text) {
         const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
         return text.replace(urlPattern, function(url) {
-            if (url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i)) {
+            // Έξυπνος και απλός έλεγχος για τις καταλήξεις των εικόνων
+            const isImage = url.toLowerCase().includes('.jpg') || 
+                            url.toLowerCase().includes('.jpeg') || 
+                            url.toLowerCase().includes('.png') || 
+                            url.toLowerCase().includes('.gif') || 
+                            url.toLowerCase().includes('.webp');
+
+            if (isImage) {
                 return `<img src="${url}" style="max-width: 100%; max-height: 150px; border-radius: 8px; display: block; margin-top: 5px; border: 1px solid #333; cursor: pointer;" onclick="window.open('${url}', '_blank')" alt="Εικόνα Chat" />`;
             } else {
                 return `<a href="${url}" target="_blank" style="color: #00ffcc; text-decoration: underline; font-weight: bold;">${url}</a>`;
             }
         });
     }
-
-    socket.on('connect', () => {
-        statusContainer.innerHTML = '🟢 Live Chat Συνδέθηκε!'; statusContainer.style.color = '#2ecc71';
-        messageInput.disabled = false; sendButton.disabled = false;
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { voiceButton.disabled = false; setupVoiceRecording(); }
-    });
 
     function setupVoiceRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
