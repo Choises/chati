@@ -230,22 +230,24 @@
         if(data.userId !== myUserId) soundReceive.play().catch(e=>'');
     });
 
-            function sendMsg() {
-        const txt = messageInput.value.trim(); 
-        if (!txt) return;
+                // Διορθώνουμε το όνομα σε sendMessage για να ακούει το κουμπί της HTML!
+    function sendMessage() {
+        const text = messageInput.value.trim(); 
+        if (text === '') return;
 
-        // Στέλνουμε το μήνυμα στον server μαζί με το τυχαίο χρώμα του χρήστη
+        soundSend.play().catch(e => console.log('Ήχος'));
+
+        // Στέλνουμε το μήνυμα μαζί με το νέο έντονο χρώμα του χρήστη
         socket.emit('send-message', { 
             messageId: 'msg_' + Math.random().toString(36).substr(2, 9), 
             name: usernameInput.value.trim() || 'Επισκέπτης', 
-            message: txt, 
+            message: text, 
             color: userColor, 
             userId: myUserId 
         });
 
         messageInput.value = '';
     }
-
 
     sendButton.addEventListener('click', sendMsg);
     messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMsg(); });
